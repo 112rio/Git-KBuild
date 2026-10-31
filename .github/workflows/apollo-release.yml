@@ -4,6 +4,11 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      ENABLE_LATEST_KSU:
+        description: '[Extra] Use latest KernelSU instead of in-tree'
+        required: false
+        type: boolean
+        default: true
       KERNEL_TREE_1:
         description: 'Kernel Tree'
         default: 'https://github.com/re-noroi/kernel_sm8250'
@@ -127,6 +132,15 @@ jobs:
             REPO_URL="${{ github.event.inputs.KERNEL_TREE_1 }}"
           fi
           git clone --depth=1 --branch "${{ env.KERNEL_TREE_BRANCH }}" "${REPO_URL}" kernel_tree
+      - name: Setup Latest KernelSU & NoMount
+        run: |
+          cd kernel_tree
+          # If kernel tree uses KernelSU, update or initialize it safely
+          if [ -d "KernelSU" ]; then
+            cd KernelSU && git pull && cd ..
+          else
+            curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+          fi
 
       - name: Kernel Version
         run: |
